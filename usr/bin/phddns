@@ -1,0 +1,107 @@
+#!/bin/bash
+# rachpt modfied
+# Date: 2019-05-22
+
+USER_DATA='/tmp/oraysl.status'
+ORAYSL=`ps -A|grep "oraysl"|grep -v 'grep'|awk '{print $1}'`
+ORAYNEWPH=`ps -A|grep "oraynewph"|grep -v 'grep'|awk '{print $1}'`
+
+start() {
+  [[ $ORAYSL ]] && kill -9  $ORAYSL &>/dev/null
+  [[ $ORAYNEWPH ]] && kill -9 $ORAYNEWPH &>/dev/null
+  /usr/bin/oraynewph -s 0.0.0.0 >/dev/null 2>&1 &
+	sleep 2
+	/usr/bin/oraysl -a 127.0.0.1 -p 16062 -s phsle02.oray.net:6061 -d
+	echo -e "\033[1;31mStart Phddns Service Success !\033[0m"
+}
+status() {
+	if [[ ! -f "$USER_DATA" ]]; then
+		echo -e "\033[1;31mPhddns Service Is not working !\033[0m"
+	else
+	  SN=`cat "$USER_DATA"|grep 'sn='|cut -d= -f2-`;
+	  STATUS=`cat "$USER_DATA"|grep 'status'| cut -d= -f2-`;
+    echo -e " \033[32m+--------------------------------------------------+\033[0m"
+    echo -e " \033[32m|            Oray PeanutHull Linux 3.0             |\033[0m"
+    echo -e " \033[32m+--------------------------------------------------+\033[0m"
+    echo -e " \033[32m|              Runstatus: $STATUS                   |\033[0m"
+    echo -e " \033[32m+--------------------------------------------------+\033[0m"
+    echo -e " \033[32m|              SN: $SN                |\033[0m"
+    echo -e " \033[32m+--------------------------------------------------+\033[0m"
+    echo -e " \033[32m|    Remote Management Address http://b.oray.com   |\033[0m"
+    echo -e " \033[32m+--------------------------------------------------+\033[0m"
+	fi
+}
+
+stop() {
+	echo -e "\033[1;31mSure you want to stop Phddns Service ?(y/n)\033[0m"
+	read userinfo
+		if [[ "$userinfo" = y ]]; then
+			if [[ $ORAYSL || $ORAYNEWPH ]]; then
+				kill -9 $ORAYSL &>/dev/null 
+				kill -9 $ORAYNEWPH &>/dev/null
+				rm -rf /tmp/oray*
+        echo -e "\033[1;31mPhddns Service Already stopped !\033[0m"
+			else
+				echo -e "\033[1;31mPhddns Service Is not Working"
+			fi
+		else
+			echo -e "\033[1;31mStop Phddns Service failed, Try again!\033[0m"
+		fi
+}
+force_stop() {
+	if [[ $ORAYSL	|| $ORAYNEWPH ]]; then
+		kill -9 $ORAYSL &>/dev/null
+		kill -9 $ORAYNEWPH &>/dev/null
+		rm -rf /tmp/oray*
+	fi
+}
+
+restart() {
+  [[ $ORAYSL ]] && kill -9  $ORAYSL &>/dev/null
+  [[ $ORAYNEWPH ]] && kill -9 $ORAYNEWPH &>/dev/null
+  /usr/bin/oraynewph -s 0.0.0.0 >/dev/null 2>&1 &
+	sleep 2
+	/usr/bin/oraysl -a 127.0.0.1 -p 16062 -s phsle02.oray.net:6061 -d
+	echo -e "\033[1;31mRestart Phddns Service Success !\033[0m"
+}
+
+reset() {
+	if [[ -f "/etc/init.status" ]]; then
+		echo -e "\033[1;31mSure you want to reset it?(y/n)\033[0m"
+		read  userinfo
+		if [[ "$userinfo" =  y ]]; then 
+			rm -rf /etc/init.status
+			echo -e "\033[1;31mreset success !\033[0m"
+		else
+			echo -e "\033[1;31mReset failed ! Try again\033[0m"
+		fi
+	else 
+		echo -e "\033[1;31mYour Account Not Logon or Already resetted !\033[0m"
+	fi
+}
+
+version() {
+	echo -e "\033[1;31mOray PeanutHull DDNS 3.0\033[0m"
+}
+
+case "$1" in
+	"start")
+		start;;
+	"status")
+		status;;
+	"restart")
+		restart;;
+	"stop")
+		stop;;
+	"force_stop")
+		force_stop;;
+	"reset")
+		reset;;
+	"version")
+		version;;
+	*)
+		echo "Phddns Serive called with  unknown argument"
+		echo "(phddns  |start|status|stop|restart|reset|version)"
+		exit 1;;
+esac
+

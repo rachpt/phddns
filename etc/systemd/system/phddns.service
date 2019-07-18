@@ -1,0 +1,10 @@
+[Unit]
+Description=Phddns Daemon
+After=network.target
+[Service]
+Type=forking
+ExecStart=/usr/bin/phddns start
+ExecStop=/usr/bin/phddns force_stop
+
+[Install]
+WantedBy=multi-user.target
